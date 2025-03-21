@@ -1,0 +1,132 @@
+Connect to the server
+Connect your Python application to a Redis database
+Basic connectionConnect to localhost on port 6379, set a value in Redis, and retrieve it. All responses are returned as bytes in Python. To receive decoded strings, set decode_responses=True. For more connection options, see these examples.
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+Store and retrieve a simple string.r.set('foo', 'bar')
+# True
+r.get('foo')
+# bar
+Store and retrieve a dict.r.hset('user-session:123', mapping={
+    'name': 'John',
+    "surname": 'Smith',
+    "company": 'Redis',
+    "age": 29
+})
+# True
+
+r.hgetall('user-session:123')
+# {'surname': 'Smith', 'name': 'John', 'company': 'Redis', 'age': '29'}
+Connect to a Redis clusterTo connect to a Redis cluster, use RedisCluster.from redis.cluster import RedisCluster
+
+rc = RedisCluster(host='localhost', port=16379)
+
+print(rc.get_nodes())
+# [[host=127.0.0.1,port=16379,name=127.0.0.1:16379,server_type=primary,redis_connection=Redis<ConnectionPool<Connection<host=127.0.0.1,port=16379,db=0>>>], ...
+
+rc.set('foo', 'bar')
+# True
+
+rc.get('foo')
+# b'bar'
+For more information, see redis-py Clustering.Connect to your production Redis with TLSWhen you deploy your application, use TLS and follow the Redis security guidelines.import redis
+
+r = redis.Redis(
+    host="my-redis.cloud.redislabs.com", port=6379,
+    username="default", # use your Redis user. More info https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
+    password="secret", # use your Redis password
+    ssl=True,
+    ssl_certfile="./redis_user.crt",
+    ssl_keyfile="./redis_user_private.key",
+    ssl_ca_certs="./redis_ca.pem",
+)
+r.set('foo', 'bar')
+# True
+
+r.get('foo')
+# b'bar'
+For more information, see redis-py TLS examples.Connect using client-side cachingClient-side caching is a technique to reduce network traffic between
+the client and server, resulting in better performance. See
+Client-side caching introduction
+for more information about how client-side caching works and how to use it effectively.To enable client-side caching, add some extra parameters when you connect
+to the server:The example below shows the simplest client-side caching connection to the default host and port,
+localhost:6379.
+All of the connection variants described above accept these parameters, so you can
+use client-side caching with a connection pool or a cluster connection in exactly the same way.import redis
+from redis.cache import CacheConfig
+
+r = redis.Redis(
+    protocol=3,
+    cache_config=CacheConfig(),
+    decode_responses=True
+)
+
+r.set("city", "New York")
+cityNameAttempt1 = r.get("city")    # Retrieved from Redis server and cached
+cityNameAttempt2 = r.get("city")    # Retrieved from cache
+You can see the cache working if you connect to the same Redis database
+with redis-cli and run the
+MONITOR command. If you run the
+code above with the cache_config line commented out, you should see
+the following in the CLI among the output from MONITOR:The server responds to both get("city") calls.
+If you run the code again with cache_config uncommented, you will seeThe first get("city") call contacted the server but the second
+call was satisfied by the cache.You can remove individual keys from the cache with the
+delete_by_redis_keys() method. This removes all cached items associated
+with the keys, so all results from multi-key commands (such as
+MGET) and composite data structures
+(such as hashes) will be
+cleared at once. The example below shows the effect of removing a single
+key from the cache:r.hget("person:1", "name") # Read from the server
+r.hget("person:1", "name") # Read from the cache
+
+r.hget("person:2", "name") # Read from the server
+r.hget("person:2", "name") # Read from the cache
+
+cache = r.get_cache()
+cache.delete_by_redis_keys(["person:1"])
+
+r.hget("person:1", "name") # Read from the server
+r.hget("person:1", "name") # Read from the cache
+
+r.hget("person:2", "name") # Still read from the cache
+You can also clear all cached items using the flush()
+method:r.hget("person:1", "name") # Read from the server
+r.hget("person:1", "name") # Read from the cache
+
+r.hget("person:2", "name") # Read from the cache
+r.hget("person:2", "name") # Read from the cache
+
+cache = r.get_cache()
+cache.flush()
+
+r.hget("person:1", "name") # Read from the server
+r.hget("person:1", "name") # Read from the cache
+
+r.hget("person:2", "name") # Read from the server
+r.hget("person:2", "name") # Read from the cache
+The client will also flush the cache automatically
+if any connection (including one from a connection pool)
+is disconnected.Connect with a connection poolFor production usage, you should use a connection pool to manage
+connections rather than opening and closing connections individually.
+A connection pool maintains several open connections and reuses them
+efficiently. When you open a connection from a pool, the pool allocates
+one of its open connections. When you subsequently close the same connection,
+it is not actually closed but simply returned to the pool for reuse.
+This avoids the overhead of repeated connecting and disconnecting.
+See
+Connection pools and multiplexing
+for more information.Use the following code to connect with a connection pool:import redis
+
+pool = redis.ConnectionPool().from_url("redis://localhost")
+r1 = redis.Redis().from_pool(pool)
+r2 = redis.Redis().from_pool(pool)
+r3 = redis.Redis().from_pool(pool)
+
+r1.set("wind:1", "Hurricane")
+r2.set("wind:2", "Tornado")
+r3.set("wind:3", "Mistral")
+
+r1.close()
+r2.close()
+r3.close()
+
+pool.close()
