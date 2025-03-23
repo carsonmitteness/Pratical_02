@@ -1,7 +1,4 @@
-Connect to the server
-Connect your Python application to a Redis database
-Basic connectionConnect to localhost on port 6379, set a value in Redis, and retrieve it. All responses are returned as bytes in Python. To receive decoded strings, set decode_responses=True. For more connection options, see these examples.
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+Connect to the serverConnect your Python application to a Redis databaseBasic connectionConnect to localhost on port 6379, set a value in Redis, and retrieve it. All responses are returned as bytes in Python. To receive decoded strings, set decode_responses=True. For more connection options, see these examples.r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 Store and retrieve a simple string.r.set('foo', 'bar')
 # True
 r.get('foo')
@@ -67,8 +64,13 @@ You can see the cache working if you connect to the same Redis database
 with redis-cli and run the
 MONITOR command. If you run the
 code above with the cache_config line commented out, you should see
-the following in the CLI among the output from MONITOR:The server responds to both get("city") calls.
-If you run the code again with cache_config uncommented, you will seeThe first get("city") call contacted the server but the second
+the following in the CLI among the output from MONITOR:1723109720.268903 [...] "SET" "city" "New York"
+1723109720.269681 [...] "GET" "city"
+1723109720.270205 [...] "GET" "city"
+ The server responds to both get("city") calls.
+If you run the code again with cache_config uncommented, you will see1723110248.712663 [...] "SET" "city" "New York"
+1723110248.713607 [...] "GET" "city"
+ The first get("city") call contacted the server but the second
 call was satisfied by the cache.You can remove individual keys from the cache with the
 delete_by_redis_keys() method. This removes all cached items associated
 with the keys, so all results from multi-key commands (such as

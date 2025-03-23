@@ -1,0 +1,39 @@
+Unpack Arrays and Group Introduction In this tutorial, you can learn how to use PyMongo to
+construct an aggregation pipeline, perform the
+aggregation on a collection, and print the results by completing and
+running a sample app. This aggregation performs the following operations: Aggregation Task Summary This tutorial demonstrates how to create insights from customer order
+data. The results show the list of products ordered that cost more than
+$15, and each document contains the number of units sold and the total
+sale value for each product. This example uses one collection, orders, which contains documents
+describing product orders. Since each order contains multiple products,
+the first step of the aggregation is unpacking the products array
+into individual product order documents. Before You Get Started Before you begin following an aggregation tutorial, you must set up a
+new Python app. You can use this app to connect to a MongoDB
+deployment, insert sample data into MongoDB, and run the aggregation
+pipeline in each tutorial. Tip To learn how to install the driver and connect to MongoDB,
+see Get Started with PyMongo Once you install the driver, create a file called
+agg_tutorial.py. Paste the following code in this file to create an
+app template for the aggregation tutorials: from pymongo import MongoClient  # Replace the placeholder with your connection string. uri = "<connection string>" client = MongoClient(uri)  try:     agg_db = client["agg_tutorials_db"]      # Get a reference to relevant collections.     # ... some_coll =     # ... another_coll =      # Delete any existing documents in collections.     # ... some_coll.delete_many({})      # Insert sample data into the collection or collections.     # ... some_data = [...]      # ... some_coll.insert_many(some_data)      # Create an empty pipeline array.     pipeline = []      # Add code to create pipeline stages.     # ... pipeline.append({...})      # Run the aggregation.     # ... aggregation_result = ...      # Print the aggregation results.     for document in aggregation_result:         print(document)  finally:     client.close() Important In the preceding code, read the code comments to find the sections of
+the code that you must modify for the tutorial you are following. If you attempt to run the code without making any changes, you will
+encounter a connection error. For every tutorial, you must replace the connection string placeholder with
+your deployment's connection string. To learn how to locate your deployment's connection
+string, see Create a Connection String. For example, if your connection string is
+"mongodb+srv://mongodb-example:27017", your connection string assignment resembles
+the following: uri = "mongodb+srv://mongodb-example:27017"; To run the completed file after you modify the template for a
+tutorial, run the following command in your shell: python3 agg_tutorial.py After you set up the app, access the orders collection by adding the
+following code to the application: orders_coll = agg_db["orders"] Delete any existing data and insert sample data into
+the orders collection as shown in the following code: orders_coll.delete_many({})  order_data = [     {         "order_id": 6363763262239,         "products": [             {                 "prod_id": "abc12345",                 "name": "Asus Laptop",                 "price": 431,             },             {                 "prod_id": "def45678",                 "name": "Karcher Hose Set",                 "price": 22,             },         ]     },     {         "order_id": 1197372932325,         "products": [             {                 "prod_id": "abc12345",                 "name": "Asus Laptop",                 "price": 429,             }         ]     },     {         "order_id": 9812343774839,         "products": [             {                 "prod_id": "pqr88223",                 "name": "Morphy Richards Food Mixer",                 "price": 431,             },             {                 "prod_id": "def45678",                 "name": "Karcher Hose Set",                 "price": 21,             }         ]     },     {         "order_id": 4433997244387,         "products": [             {                 "prod_id": "def45678",                 "name": "Karcher Hose Set",                 "price": 23,             },             {                 "prod_id": "jkl77336",                 "name": "Picky Pencil Sharpener",                 "price": 1,             },             {                 "prod_id": "xyz11228",                 "name": "Russell Hobbs Chrome Kettle",                 "price": 16,             }         ]     } ]  orders_coll.insert_many(order_data) Tutorial To view the complete code for this tutorial, see the Completed Unpack Arrays App
+on GitHub. Add an unwind stage to unpack the array of product orders First, add an $unwind stage to separate the
+entries in the products array into individual documents: pipeline.append({     "$unwind": {         "path": "$products"     } }) Add a match stage for products that cost more than $15 Next, add a $match stage that matches
+products with a products.price value greater than 15: pipeline.append({     "$match": {         "products.price": {             "$gt": 15         }     } }) Add a group stage to group by product type Add a $group stage to group
+orders by the value of the prod_id field. In this
+stage, add aggregation operations that create the
+following fields in the result documents: pipeline.append({     "$group": {         "_id": "$products.prod_id",         "product": {"$first": "$products.name"},         "total_value": {"$sum": "$products.price"},         "quantity": {"$sum": 1}     } }) Add a set stage to display the product ID Add a $set stage to recreate the
+product_id field from the values in the _id field
+that were set during the $group stage: pipeline.append({     "$set": {         "product_id": "$_id"     } }) Add an unset stage to remove unneeded fields Finally, add an $unset stage. The
+$unset stage removes the _id field from the result
+documents: pipeline.append({"$unset": ["_id"]}) Run the aggregation pipeline Add the following code to the end of your application to perform
+the aggregation on the orders collection: aggregation_result = orders_coll.aggregate(pipeline) Finally, run the following command in your shell to start your
+application: python3 agg_tutorial.py Interpret results The aggregation returns the following summary of customers' orders
+from 2020: {   'product': 'Asus Laptop',   'total_value': 860,   'quantity': 2,   'product_id': 'abc12345' } {   'product': 'Morphy Richards Food Mixer',   'total_value': 431,   'quantity': 1,   'product_id': 'pqr88223' } {   'product': 'Russell Hobbs Chrome Kettle',   'total_value': 16,   'quantity': 1,   'product_id': 'xyz11228' } {   'product': 'Karcher Hose Set',   'total_value': 66,   'quantity': 3,   'product_id': 'def45678' } The result documents contain details about the total value and
+quantity of orders for products that cost more than $15. 

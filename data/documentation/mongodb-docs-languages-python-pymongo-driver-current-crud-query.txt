@@ -1,0 +1,13 @@
+Query Overview On this page, you can see copyable code examples that show common
+methods you can use to find documents with PyMongo. Tip To learn more about any of the methods shown on this page, see the link
+provided in each section. To use an example from this page, copy the code example into the
+sample application or your own application.
+Be sure to replace all placeholders in the code examples, such as <connection string URI>, with
+the relevant values for your MongoDB deployment. 1import pymongo 2from pymongo import MongoClient 3 4try: 5    uri = "<connection string URI>" 6    client = MongoClient(uri) 7 8    database = client["<database name>"] 9    collection = database["<collection name>"] 10 11    # start example code here 12 13    # end example code here 14 15    client.close() 16 17except Exception as e: 18    raise Exception( 19        "The following error occurred: ", e) Sample Application You can use the following sample application to test the code examples on this
+page. To use the sample application, perform the following steps: Find One results = collection.find_one({ "<field name>" : "<value>" })  print(results) To learn more about the find_one() method, see Find One Document in
+the Retrieve Data guide. Find Multiple results = collection.find({ "<field name>" : "<value>" })  for document in results:     print(document) To learn more about the find() method, see Find Multiple Documents in
+the Retrieve Data guide. Count Documents in a Collection count = collection.count_documents({})  print(count) To learn more about the count_documents() method, see the
+Retrieve an Accurate Count guide. Count Documents Returned from a Query count = collection.count_documents({ "<field name>": "<value>" })  print(count) To learn more about the count_documents() method, see the
+Retrieve an Accurate Count guide. Estimated Document Count count = collection.estimated_document_count()  print(count) To learn more about the estimated_document_count() method, see the
+Retrieve an Estimated Count guide. Retrieve Distinct Values results = collection.distinct("<field name>")  for document in results:     print(document) To learn more about the distinct() method, see the
+Retrieve Distinct Field Values guide. 
