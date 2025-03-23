@@ -1,0 +1,27 @@
+Access Data From a Cursor Overview In this guide, you can learn how to access data from a cursor with
+PyMongo. A cursor is a mechanism that returns the results of a read operation in iterable
+batches. Because a cursor holds only a subset of documents at any given time,
+cursors reduce both memory consumption and network bandwidth usage. Whenever PyMongo performs a read operation that returns multiple
+documents, it automatically returns those documents in a cursor. Sample Data The examples in this guide use the sample_restaurants.restaurants collection
+from the Atlas sample datasets. To learn how to create a
+free MongoDB Atlas cluster and load the sample datasets, see the Get Started with PyMongo
+tutorial. Access Cursor Contents Iteratively To iterate over the contents of a cursor, use a for loop, as shown in the
+following example: results = collection.find()  for document in results:     print(document) Retrieve Documents Individually Retrieve documents from a cursor individually by calling the next() method. The following example finds all documents in a collection with a name value
+of "Dunkin' Donuts". It then prints the first document in the cursor by calling the
+next() method. results = collection.find({ "name": "Dunkin' Donuts" })  print(results.next()) {'_id': ObjectId('...'), 'address': { ... }, 'borough': 'Bronx', 'cuisine': 'Donuts', 'grades': [...], 'name': "Dunkin' Donuts", 'restaurant_id': '40379573'} Retrieve All Documents Warning If the number and size of documents returned by your query exceeds available
+application memory, your program will crash. If you expect a large result
+set, access your cursor iteratively. To retrieve all documents from a cursor, convert the cursor into a list as
+shown in the following example: results = collection.find({ "name": "Dunkin' Donuts" })  all_results = list(results)  for document in all_results:     print(document) Close a Cursor By default, MongoDB closes a cursor when the client has exhausted all the
+results in the cursor. To explicitly close a cursor, call the close() method
+as shown in the following example: results = collection.find()  ...  results.close() Tailable Cursors When querying on a capped collection, you
+can use a tailable cursor that remains open after the client exhausts the
+results in a cursor. To create a tailable cursor with capped collection,
+specify CursorType.TAILABLE_AWAIT in the cursor_type option of a
+find() method. The following example uses a tailable cursor to tail the oplog
+of a replica-set member: oplog = client.local.oplog.rs first = oplog.find().sort('$natural', pymongo.ASCENDING).limit(-1).next() print(first) ts = first['ts']  while True:     cursor = oplog.find({'ts': {'$gt': ts}},                         cursor_type=pymongo.CursorType.TAILABLE_AWAIT)     while cursor.alive:         for doc in cursor:             ts = doc['ts']             print(doc)          # You end up here if the find() method returns no documents, or if         # no new documents are added to the collection for more than 1 second.         time.sleep(1) To learn more about tailable cursors, see the Tailable Cursors guide in the MongoDB Server manual. Troubleshooting 'Cursor' Object Has No Attribute '_Cursor__killed' PyMongo v3.8 or earlier raises a TypeError and an
+AttributeError if you supply invalid arguments to the Cursor
+constructor. The AttributeError is irrelevant, but the TypeError
+contains debugging information as shown in the following example: Exception ignored in: <function Cursor.__del__ at 0x1048129d8> ... AttributeError: 'Cursor' object has no attribute '_Cursor__killed' ... TypeError: __init__() got an unexpected keyword argument '<argument>' To fix this, ensure that you supply the correct keyword arguments. You can also
+upgrade to PyMongo v3.9 or later, which removes the irrelevant error. "CursorNotFound cursor id not valid at server" Cursors in MongoDB can timeout on the server if they've been open for
+a long time without any operations being performed on them. This can
+lead to a CursorNotFound exception when you try to iterate through the cursor. 

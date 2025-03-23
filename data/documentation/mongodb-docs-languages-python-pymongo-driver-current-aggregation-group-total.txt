@@ -1,0 +1,40 @@
+Group and Total Introduction In this tutorial, you can learn how to use PyMongo to
+construct an aggregation pipeline, perform the
+aggregation on a collection, and print the results by completing and
+running a sample app. This aggregation performs the following operations: Aggregation Task Summary This tutorial demonstrates how to group and analyze customer order data. The
+results show the list of customers who purchased items in 2020 and
+includes each customer's order history for 2020. This example uses one collection, orders, which contains documents
+describing individual product orders. Since each order can correspond to
+only one customer, the order documents are grouped by the
+customer_id field, which contains customer email addresses. Before You Get Started Before you begin following an aggregation tutorial, you must set up a
+new Python app. You can use this app to connect to a MongoDB
+deployment, insert sample data into MongoDB, and run the aggregation
+pipeline in each tutorial. Tip To learn how to install the driver and connect to MongoDB,
+see Get Started with PyMongo Once you install the driver, create a file called
+agg_tutorial.py. Paste the following code in this file to create an
+app template for the aggregation tutorials: from pymongo import MongoClient  # Replace the placeholder with your connection string. uri = "<connection string>" client = MongoClient(uri)  try:     agg_db = client["agg_tutorials_db"]      # Get a reference to relevant collections.     # ... some_coll =     # ... another_coll =      # Delete any existing documents in collections.     # ... some_coll.delete_many({})      # Insert sample data into the collection or collections.     # ... some_data = [...]      # ... some_coll.insert_many(some_data)      # Create an empty pipeline array.     pipeline = []      # Add code to create pipeline stages.     # ... pipeline.append({...})      # Run the aggregation.     # ... aggregation_result = ...      # Print the aggregation results.     for document in aggregation_result:         print(document)  finally:     client.close() Important In the preceding code, read the code comments to find the sections of
+the code that you must modify for the tutorial you are following. If you attempt to run the code without making any changes, you will
+encounter a connection error. For every tutorial, you must replace the connection string placeholder with
+your deployment's connection string. To learn how to locate your deployment's connection
+string, see Create a Connection String. For example, if your connection string is
+"mongodb+srv://mongodb-example:27017", your connection string assignment resembles
+the following: uri = "mongodb+srv://mongodb-example:27017"; To run the completed file after you modify the template for a
+tutorial, run the following command in your shell: python3 agg_tutorial.py After you set up the app, access the orders collection by adding the
+following code to the application: orders_coll = agg_db["orders"] Delete any existing data and insert sample data into
+the orders collection as shown in the following code: orders_coll.delete_many({})  order_data = [     {         "customer_id": "elise_smith@myemail.com",         "orderdate": datetime(2020, 5, 30, 8, 35, 52),         "value": 231     },     {         "customer_id": "elise_smith@myemail.com",         "orderdate": datetime(2020, 1, 13, 9, 32, 7),         "value": 99     },     {         "customer_id": "oranieri@warmmail.com",         "orderdate": datetime(2020, 1, 1, 8, 25, 37),         "value": 63     },     {         "customer_id": "tj@wheresmyemail.com",         "orderdate": datetime(2019, 5, 28, 19, 13, 32),         "value": 2     },     {         "customer_id": "tj@wheresmyemail.com",         "orderdate": datetime(2020, 11, 23, 22, 56, 53),         "value": 187     },     {         "customer_id": "tj@wheresmyemail.com",         "orderdate": datetime(2020, 8, 18, 23, 4, 48),         "value": 4     },     {         "customer_id": "elise_smith@myemail.com",         "orderdate": datetime(2020, 12, 26, 8, 55, 46),         "value": 4     },     {         "customer_id": "tj@wheresmyemail.com",         "orderdate": datetime(2021, 2, 28, 7, 49, 32),         "value": 1024     },     {         "customer_id": "elise_smith@myemail.com",         "orderdate": datetime(2020, 10, 3, 13, 49, 44),         "value": 102     } ]  orders_coll.insert_many(order_data) Tutorial To view the complete code for this tutorial, see the Completed Group and Total App
+on GitHub. Add a match stage for orders in 2020 First, add a $match stage that matches
+orders placed in 2020: pipeline.append({     "$match": {         "orderdate": {             "$gte": datetime(2020, 1, 1, 0, 0, 0),             "$lt": datetime(2021, 1, 1, 0, 0, 0)         }     } }) Add a sort stage to sort by order date Next, add a $sort stage to set an
+ascending sort on the orderdate field to surface the earliest
+2020 purchase for each customer in the next stage: pipeline.append({     "$sort": {         "orderdate": 1     } }) Add a group stage to group by email address Add a $group stage to group
+orders by the value of the customer_id field. In this
+stage, add aggregation operations that create the
+following fields in the result documents: pipeline.append({     "$group": {         "_id": "$customer_id",         "first_purchase_date": {"$first": "$orderdate"},         "total_value": {"$sum": "$value"},         "total_orders": {"$sum": 1},         "orders": {"$push": {"orderdate": "$orderdate", "value": "$value"}}     } }) Add a sort stage to sort by first order date Next, add another $sort stage to set an
+ascending sort on the first_purchase_date field: pipeline.append({     "$sort": {         "first_purchase_date": 1     } }) Add a set stage to display the email address Add a $set stage to recreate the
+customer_id field from the values in the _id field
+that were set during the $group stage: pipeline.append({     "$set": {         "customer_id": "$_id"     } }) Add an unset stage to remove unneeded fields Finally, add an $unset stage. The
+$unset stage removes the _id field from the result
+documents: pipeline.append({"$unset": ["_id"]}) Run the aggregation pipeline Add the following code to the end of your application to perform
+the aggregation on the orders collection: aggregation_result = orders_coll.aggregate(pipeline) Finally, run the following command in your shell to start your
+application: python3 agg_tutorial.py Interpret results The aggregation returns the following summary of customers' orders
+from 2020: {   'first_purchase_date': datetime.datetime(2020, 1, 1, 8, 25, 37),   'total_value': 63,   'total_orders': 1,   'orders': [ { 'orderdate': datetime.datetime(2020, 1, 1, 8, 25, 37), 'value': 63 } ],   'customer_id': 'oranieri@warmmail.com' } {   'first_purchase_date': datetime.datetime(2020, 1, 13, 9, 32, 7),   'total_value': 436,   'total_orders': 4,   'orders': [     { 'orderdate': datetime.datetime(2020, 1, 13, 9, 32, 7), 'value': 99 },     { 'orderdate': datetime.datetime(2020, 5, 30, 8, 35, 52), 'value': 231 },     { 'orderdate': datetime.datetime(2020, 10, 3, 13, 49, 44), 'value': 102 },     { 'orderdate': datetime.datetime(2020, 12, 26, 8, 55, 46), 'value': 4 }   ],   'customer_id': 'elise_smith@myemail.com' } {   'first_purchase_date': datetime.datetime(2020, 8, 18, 23, 4, 48),   'total_value': 191,   'total_orders': 2,   'orders': [     { 'orderdate': datetime.datetime(2020, 8, 18, 23, 4, 48), 'value': 4 },     { 'orderdate': datetime.datetime(2020, 11, 23, 22, 56, 53), 'value': 187 }   ],   'customer_id': 'tj@wheresmyemail.com' } The result documents contain details from all the orders from
+a given customer, grouped by the customer's email address. 

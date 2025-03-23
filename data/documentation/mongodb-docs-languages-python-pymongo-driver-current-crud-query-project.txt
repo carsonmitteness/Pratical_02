@@ -1,0 +1,23 @@
+Specify Fields To Return Overview In this guide, you can learn how to specify which fields to return from a read
+operation by using a projection. A projection is a document that specifies
+which fields MongoDB returns from a query. Sample Data The examples in this guide use the sample_restaurants.restaurants collection
+from the Atlas sample datasets. To learn how to create a
+free MongoDB Atlas cluster and load the sample datasets, see the
+Get Started with PyMongo guide. Projection Types You can use a projection to specify which fields to include in a return
+document, or to specify which fields to exclude. You cannot combine inclusion and
+exclusion statements in a single projection, unless you are excluding the
+_id field. Specify Fields to Include Use the following syntax to specify the fields to include in the result: { "<Field Name>": 1 } The following example uses the find() method to find all restaurants with
+the name field value of "Emerald Pub". It then uses a projection to
+return only the name, cuisine, and borough fields in the returned
+documents. results = restaurants.find({ "name" : "Emerald Pub"}, {"name": 1, "cuisine": 1, "borough": 1})  for restaurant in results:     print(restaurant) {'_id': ObjectId('...'), 'borough': 'Manhattan', 'cuisine': 'American', 'name': 'Emerald Pub'} {'_id': ObjectId('...'), 'borough': 'Queens', 'cuisine': 'American', 'name': 'Emerald Pub'} When you use a projection to specify fields to include in the return
+document, the _id field is also included by default. All other fields are
+implicitly excluded. To remove the _id field from the return
+document, you must explicitly exclude it. Exclude the _id Field When specifying fields to include, you can also exclude the _id field from
+the returned document. The following example performs the same query as the preceding example, but
+excludes the _id field from the projection: results = restaurants.find({ "name" : "Emerald Pub"}, {"_id": 0, "name": 1, "cuisine": 1, "borough": 1})  for restaurant in results:     print(restaurant) {'borough': 'Manhattan', 'cuisine': 'American', 'name': 'Emerald Pub'} {'borough': 'Queens', 'cuisine': 'American', 'name': 'Emerald Pub'} Specify Fields to Exclude Use the following syntax to specify the fields to exclude from the result: { "<Field Name>": 0 } The following example uses the find() method to find all restaurants with
+the name field value of "Emerald Pub". It then uses a projection to
+exclude the grades and address fields from the returned documents: results = restaurants.find({ "name" : "Emerald Pub"}, {"grades": 0, "address": 0} )  for restaurant in results:     print(restaurant) {'_id': ObjectId('...'), 'borough': 'Manhattan', 'cuisine': 'American', 'name': 'Emerald Pub', 'restaurant_id': '40367329'} {'_id': ObjectId('...'), 'borough': 'Queens', 'cuisine': 'American', 'name': 'Emerald Pub', 'restaurant_id': '40668598'} When you use a projection to specify which fields to exclude,
+any unspecified fields are implicitly included in the return document. Troubleshooting The following sections describe errors you might see when using projections. 'Cannot Do Exclusion on Field <field> in Inclusion Projection' The driver returns an OperationFailure with this message if you attempt to
+include and exclude fields in a single projection. Ensure that your
+projection specifies only fields to include or fields to exclude. Additional Information To learn more about projections, see the Project Fields guide in the MongoDB Server manual. API Documentation To learn more about any of the methods or types discussed in this
+guide, see the following API Documentation: 

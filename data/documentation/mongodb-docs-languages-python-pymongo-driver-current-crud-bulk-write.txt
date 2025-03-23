@@ -1,0 +1,83 @@
+Bulk Write Operations Overview In this guide, you can learn how to use PyMongo to
+perform bulk operations. Bulk operations reduce the number
+of calls to the server by performing multiple write operations
+in a single method. The Collection and MongoClient classes both provide a bulk_write()
+method. When calling bulk_write() on a Collection instance, you can
+perform multiple write operations on a single collection. When calling
+bulk_write() on a MongoClient instance, you can perform bulk writes across
+multiple namespaces. In MongoDB, a namespace consists of the database name and the collection
+name in the format <database>.<collection>. Important To perform bulk operations on a MongoClient instance,
+ensure that your application meets the following
+requirements: Sample Data The examples in this guide use the sample_restaurants.restaurants
+and sample_mflix.movies collections from the Atlas sample datasets. To learn how to create a free MongoDB Atlas cluster
+and load the sample datasets, see the Get Started with PyMongo tutorial. Define the Write Operations For each write operation you want to perform, create an instance of one of
+the following operation classes: Then, pass a list of these instances to the bulk_write() method. Important Ensure that you import the write operation classes into your application
+file, as shown in the following code: from pymongo import InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany The following sections show how to create instances of the preceding classes,
+which you can use to perform collection and client bulk operations. Insert Operations To perform an insert operation, create an instance of InsertOne and specify
+the document you want to insert. Pass the following keyword arguments to the
+InsertOne constructor: The following example creates an instance of InsertOne: operation = InsertOne(     namespace="sample_restaurants.restaurants",     document={         "name": "Mongo's Deli",         "cuisine": "Sandwiches",         "borough": "Manhattan",         "restaurant_id": "1234"     } ) You can also create an instance of InsertOne by passing an instance of a custom class
+to the constructor. This provides additional type safety if you're using a type-checking
+tool. The instance you pass must inherit from the TypedDict class. Note TypedDict in Python 3.7 and Earlier The TypedDict class
+is in the typing module, which
+is available only in Python 3.8 and later. To use the TypedDict class in
+earlier versions of Python, install the
+typing_extensions package. The following example constructs an InsertOne instance by using a custom
+class for added type safety: class Restaurant (TypedDict):     name: str     cuisine: str     borough: str     restaurant_id: str  operation = pymongo.InsertOne(Restaurant(     name="Mongo's Deli", cuisine="Sandwiches", borough="Manhattan", restaurant_id="1234")) To insert multiple documents, create an instance of InsertOne for each document. Note _id Field Must Be Unique In a MongoDB collection, each document must contain an _id field
+with a unique value. If you specify a value for the _id field, you must ensure that the
+value is unique across the collection. If you don't specify a value,
+the driver automatically generates a unique ObjectId value for the field. We recommend letting the driver automatically generate _id values to
+ensure uniqueness. Duplicate _id values violate unique index constraints, which
+causes the driver to return an error. Update Operations To update a document, create an instance of UpdateOne and pass in
+the following arguments: UpdateOne updates the first document that matches your query filter. The following example creates an instance of UpdateOne: operation = UpdateOne(     namespace="sample_restaurants.restaurants",     filter={ "name": "Mongo's Deli" },     update={ "$set": { "cuisine": "Sandwiches and Salads" }} ) To update multiple documents, create an instance of UpdateMany and pass in
+the same arguments. UpdateMany updates all documents that match your query
+filter. The following example creates an instance of UpdateMany: operation = UpdateMany(     namespace="sample_restaurants.restaurants",     filter={ "name": "Mongo's Deli" },     update={ "$set": { "cuisine": "Sandwiches and Salads" }} ) Replace Operations A replace operation removes all fields and values of a specified document and
+replaces them with new ones. To perform a replace operation, create an instance
+of ReplaceOne and pass in the following arguments: The following example creates an instance of ReplaceOne: operation = ReplaceOne(     namespace="sample_restaurants.restaurants",     filter={ "restaurant_id": "1234" },     replacement={         "name": "Mongo's Pizza",         "cuisine": "Pizza",         "borough": "Brooklyn",         "restaurant_id": "5678"     } ) You can also create an instance of ReplaceOne by passing an instance of a custom class
+to the constructor. This provides additional type safety if you're using a type-checking
+tool. The instance you pass must inherit from the TypedDict class. Note TypedDict in Python 3.7 and Earlier The TypedDict class
+is in the typing module, which
+is available only in Python 3.8 and later. To use the TypedDict class in
+earlier versions of Python, install the
+typing_extensions package. The following example constructs a ReplaceOne instance by using a custom
+class for added type safety: class Restaurant (TypedDict):     name: str     cuisine: str     borough: str     restaurant_id: str  operation = pymongo.ReplaceOne(     { "restaurant_id": "1234" },     Restaurant(name="Mongo's Pizza", cuisine="Pizza", borough="Brooklyn", restaurant_id="5678") ) To replace multiple documents, you must create an instance of ReplaceOne for each document. Tip Type-Checking Tools To learn more about type-checking tools available for Python, see
+Type Checkers on the Tools page. Delete Operations To delete a document, create an instance of DeleteOne and pass in
+the following arguments: DeleteOne removes only the first document that matches your query filter. The following example creates an instance of DeleteOne: operation = DeleteOne(     namespace="sample_restaurants.restaurants",     filter={ "restaurant_id": "5678" } ) To delete multiple documents, create an instance of DeleteMany and pass in a
+namespace and query filter specifying the document you want to delete. DeleteMany removes
+all documents that match your query filter. The following example creates an instance of DeleteMany: operation = DeleteMany(     namespace="sample_restaurants.restaurants",     filter={ "name": "Mongo's Deli" } ) Call the bulk_write() Method After you define a class instance for each operation you want to perform,
+pass a list of these instances to the bulk_write() method. Call the
+bulk_write() method on a Collection instance to write to a single
+collection or a MongoClient instance to write to multiple namespaces. If any of the write operations called on a Collection fail, PyMongo raises a
+BulkWriteError and does not perform any further operations.
+BulkWriteError provides a details attribute that includes the operation
+that failed, and details about the exception. If any of the write operations called on a MongoClient fail, PyMongo raises a
+ClientBulkWriteException and does not perform any further operations.
+ClientBulkWriteException provides an error attribute that includes
+information about the exception. Note When PyMongo runs a bulk operation, it uses the write_concern of the
+collection or client on which the operation is running. You can also set
+a write concern for the operation when using the MongoClient.bulk_write()
+method. The driver reports all write concern errors after attempting all operations,
+regardless of execution order. To learn more about write concerns, see Write Concern
+in the MongoDB Server manual. Collection Bulk Write Example The following example performs multiple write operations on the
+restaurants collection by using the bulk_write() method
+on a Collection instance: operations = [     InsertOne(         document={             "name": "Mongo's Deli",             "cuisine": "Sandwiches",             "borough": "Manhattan",             "restaurant_id": "1234"         }     ),     InsertOne(         document={             "name": "Mongo's Deli",             "cuisine": "Sandwiches",             "borough": "Brooklyn",             "restaurant_id": "5678"         }     ),     UpdateMany(         filter={ "name": "Mongo's Deli" },         update={ "$set": { "cuisine": "Sandwiches and Salads" }}     ),     DeleteOne(         filter={ "restaurant_id": "1234" }     ) ]  results = restaurants.bulk_write(operations)  print(results) BulkWriteResult({'writeErrors': [], 'writeConcernErrors': [], 'nInserted': 2, 'nUpserted': 0, 'nMatched': 2, 'nModified': 2, 'nRemoved': 1, 'upserted': []}, acknowledged=True) Client Bulk Write Example The following example performs multiple write operations on the
+sample_restaurants.restaurants and sample_mflix.movies
+namespaces by using the bulk_write() method on a MongoClient
+instance: operations = [     InsertOne(         namespace="sample_mflix.movies",         document={             "title": "Minari",             "runtime": 217,             "genres": ["Drama", "Comedy"]         }     ),     UpdateOne(         namespace="sample_mflix.movies",         filter={ "title": "Minari" },         update={ "$set": { "runtime": 117 }}     ),     DeleteMany(         namespace="sample_restaurants.restaurants",         filter={ "cuisine": "French" }     ) ]  results = client.bulk_write(operations)  print(results) ClientBulkWriteResult({'anySuccessful': True, 'error': None, 'writeErrors': [], 'writeConcernErrors': [], 'nInserted': 1, 'nUpserted': 0, 'nMatched': 1, 'nModified': 1, 'nDeleted': 344, 'insertResults': {}, 'updateResults': {}, 'deleteResults': {}}, acknowledged=True, verbose=False) Customize Bulk Write Operations The bulk_write() method optionally accepts additional
+parameters, which represent options you can use to configure the bulk write
+operation. Collection Bulk Write Options The following table describes the options you can pass
+to the Collection.bulk_write() method: The following example calls the bulk_write() method from the preceding
+Collection Bulk Write Example but sets the ordered option
+to False: results = restaurants.bulk_write(operations, ordered=False) If any of the write operations in an unordered bulk write fail, PyMongo
+reports the errors only after attempting all operations. Note Unordered bulk operations do not guarantee order of execution. The order can
+differ from the way you list them to optimize the runtime. Client Bulk Write Options The following table describes the options you can pass
+to the MongoClient.bulk_write() method: The following example calls the bulk_write() method from the preceding
+Client Bulk Write Example but sets the verbose_results option
+to True: results = client.bulk_write(operations, verbose_results=True) ClientBulkWriteResult({'anySuccessful': True, 'error': None, 'writeErrors': [], 'writeConcernErrors': [], 'nInserted': 1, 'nUpserted': 0, 'nMatched': 1, 'nModified': 1, 'nDeleted': 344, 'insertResults': {0: InsertOneResult(ObjectId('...'), acknowledged=True)}, 'updateResults': {1: UpdateResult({'ok': 1.0, 'idx': 1, 'n': 1, 'nModified': 1}, acknowledged=True)}, 'deleteResults': {2: DeleteResult({'ok': 1.0, 'idx': 2, 'n': 344}, acknowledged=True)}}, acknowledged=True, verbose=True) Return Values This section describes the return value of the following
+bulk operation methods: Collection Bulk Write Return Value The Collection.bulk_write() method returns a BulkWriteResult object. The
+BulkWriteResult object contains the following properties: Client Bulk Write Return Value The MongoClient.bulk_write() method returns a ClientBulkWriteResult object. The
+ClientBulkWriteResult object contains the following properties: Troubleshooting Client Type Annotations If you don't add a type annotation for your MongoClient object,
+your type checker might show an error similar to the following: from pymongo import MongoClient client = MongoClient()  # error: Need type annotation for "client" The solution is to annotate the MongoClient object as
+client: MongoClient or client: MongoClient[Dict[str, Any]]. Incompatible Type If you specify MongoClient as a type hint but don't include data types for
+the document, keys, and values, your type checker might show an error similar to
+the following: error: Dict entry 0 has incompatible type "str": "int"; expected "Mapping[str, Any]": "int" The solution is to add the following type hint to your MongoClient object: ``client: MongoClient[Dict[str, Any]]`` Additional Information To learn how to perform individual write operations, see the following guides: API Documentation To learn more about any of the methods or types discussed in this
+guide, see the following API Documentation: 

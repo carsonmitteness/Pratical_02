@@ -1,0 +1,45 @@
+Choose a Connection Target Overview In this guide, you can learn how to use a connection string and MongoClient object
+to connect to different types of MongoDB deployments. Atlas To connect to a MongoDB deployment on Atlas, include the following elements
+in your connection string: Then, pass your connection string to the MongoClient constructor. Tip Follow the Atlas driver connection guide
+to retrieve your connection string. When you connect to Atlas, we recommend using the Stable API client option to avoid
+breaking changes when Atlas upgrades to a new version of MongoDB Server.
+To learn more about the Stable API feature, see the Stable API page. The following code shows how to use PyMongo to connect to an Atlas cluster. The
+code also uses the server_api option to specify a Stable API version. from pymongo import MongoClient from pymongo.server_api import ServerApi  # Replace the placeholder with your Atlas connection string uri = "<connection string>"  # Create a MongoClient with a MongoClientOptions object to set the Stable API version client = MongoClient(uri, server_api=ServerApi(     version='1', strict=True, deprecation_errors=True))  try:     # Connect the client to the server (optional starting in v4.7)     client.connect()      # Send a ping to confirm a successful connection     client.admin.command({'ping': 1})     print("Pinged your deployment. You successfully connected to MongoDB!")  finally:     # Ensures that the client will close when you finish/error     client.close() Local Deployments To connect to a local MongoDB deployment, use localhost as the hostname. By
+default, the mongod process runs on port 27017, though you can customize this for
+your deployment. The following code shows how to use PyMongo to connect to a local MongoDB
+deployment: from pymongo import MongoClient  uri = "mongodb://localhost:27017/" client = MongoClient(uri) Replica Sets To connect to a replica set, specify the hostnames (or IP addresses) and
+port numbers of the replica-set members in your connection string. The following code shows how to use PyMongo to connect to a replica set
+that contains three hosts: from pymongo import MongoClient  client = MongoClient("mongodb://host1:27017,host2:27017,host3:27017") If you aren't able to provide a full list of hosts in the replica set, you can
+specify one or more of the hosts in the replica set and instruct PyMongo to
+perform automatic discovery to find the others. To instruct the driver to perform
+automatic discovery, perform one of the following actions: In the following example, the driver uses a sample connection URI to connect to the
+MongoDB replica set sampleRS, which is running on port 27017 of three different
+hosts, including host1: from pymongo import MongoClient  uri = "mongodb://host1:27017/?replicaSet=sampleRS" client = MongoClient(uri) PyMongo evenly load balances operations across deployments that are reachable
+within the client's localThresholdMS value. To learn more about how PyMongo load
+balances operations across multiple MongoDB deployments, see the
+Customize Server Selection guide. Note The MongoClient constructor is non-blocking.
+When you connect to a replica set, the constructor returns immediately while the
+client uses background threads to connect to the replica set. If you construct a MongoClient and immediately print the string representation
+of its nodes attribute, the list might be empty while the client connects to
+the replica-set members. Initialization To initialize a replica set, you must connect directly to a single member. To do so,
+set the directConnection connection
+option to True. You can do this in two ways: by passing an argument to the
+MongoClient constructor or through a parameter in your connection string. from pymongo import MongoClient  client = MongoClient("mongodb://<hostname>:<port>",                      directConnection=True) from pymongo import MongoClient  uri = ("mongodb://<hostname>:<port>/?"        "directConnection=true") client = MongoClient(uri) DNS Service Discovery To use DNS service discovery to look up the DNS SRV record of the service you're connecting to,
+specify the SRV connection format in your connection string. Additionally, if you enable
+the SRV connection format, PyMongo automatically re-scans for new hosts without
+having to change the client configuration. The following code shows a connection string that uses the SRV connection format: uri = "mongodb+srv://<hostname>/" To learn more about the SRV connection format, see the SRV Connection Format
+entry in the MongoDB Server manual. Troubleshooting Server Reports Wire Version X, PyMongo Requires Y If you try to connect to MongoDB Server v3.6 or earlier,
+PyMongo might raise the following error: pymongo.errors.ConfigurationError: Server at localhost:27017 reports wire version 6, but this version of PyMongo requires at least 7 (MongoDB 4.0). This occurs when the driver version is too new for the server it's connecting to.
+To resolve this issue, you can do one of the following: AutoReconnect An AutoReconnect exception indicates that a
+failover has occurred. This means that
+PyMongo has lost its connection to the original primary member
+of the replica set, and its last operation might have failed. When this error occurs, PyMongo automatically tries to find the new primary member
+for subsequent operations. To handle the error, your application must take one of the
+following actions: Important PyMongo raises an AutoReconnect error on all operations until the
+replica set elects a new primary member. Timeout When Accessing MongoDB from PyMongo with Tunneling If you try to connect to a MongoDB replica set over an SSH tunnel, you
+receive the following error: File "/Library/Python/2.7/site-packages/pymongo/collection.py", line 1560, in count   return self._count(cmd, collation, session)   File "/Library/Python/2.7/site-packages/pymongo/collection.py", line 1504, in _count   with self._socket_for_reads() as (connection, slave_ok):   File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/contextlib.py", line 17, in __enter__   return self.gen.next()   File "/Library/Python/2.7/site-packages/pymongo/mongo_client.py", line 982, in _socket_for_reads   server = topology.select_server(read_preference)   File "/Library/Python/2.7/site-packages/pymongo/topology.py", line 224, in select_server   address))   File "/Library/Python/2.7/site-packages/pymongo/topology.py", line 183, in select_servers   selector, server_timeout, address)   File "/Library/Python/2.7/site-packages/pymongo/topology.py", line 199, in _select_servers_loop   self._error_message(selector)) pymongo.errors.ServerSelectionTimeoutError: localhost:27017: timed out This occurs because PyMongo discovers replica set members by using the response
+from the isMaster command, which contains the addresses and ports of the other
+replica set members. However, you can't access these addresses and ports through the SSH
+tunnel. Instead, you can connect directly to a single MongoDB node by using the
+directConnection=True option with SSH tunneling. API Documentation To learn more about creating a MongoClient object in PyMongo,
+see the following API documentation: 

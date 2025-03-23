@@ -1,0 +1,18 @@
+Update Documents Overview In this guide, you can learn how to use PyMongo to update
+documents in a MongoDB collection by using the update_one() or
+update_many() methods. Sample Data The examples in this guide use the sample_restaurants.restaurants collection
+from the Atlas sample datasets. To learn how to create a
+free MongoDB Atlas cluster and load the sample datasets, see the
+Get Started with PyMongo tutorial. Update Operations You can perform update operations in MongoDB by using the following methods: Each update method requires the following parameters: Update One Document The following example uses the update_one() method to update the name value of a
+document named "Bagels N Buns" in the restaurants collection: restaurants = database["restaurants"]  query_filter = {'name' : 'Bagels N Buns'} update_operation = { '$set' :      { 'name' : '2 Bagels 2 Buns' } }  result = restaurants.update_one(query_filter, update_operation) Update Many Documents The following example uses the update_many() method to update all documents
+with a cuisine value of "Pizza". After the update, the documents have a
+cuisine value of "Pasta". restaurants = database["restaurants"]  query_filter = {'cuisine' : 'Pizza'} update_operation = { '$set' :      { 'cuisine' : 'Pasta' } }  result = restaurants.update_many(query_filter, update_operation) Customize the Update Operation The update_one() and update_many() methods optionally accept additional
+parameters, which represent options you can use to configure the update
+operation. If you don't specify any additional options, the driver does not customize
+the update operation. The following code uses the update_many() method to find all documents where the
+borough field has the value "Manhattan". It then updates the borough
+value in these documents to "Manhattan (north)". Because the upsert option is
+set to True, PyMongo inserts a new document if the query filter doesn't
+match any existing documents. restaurants = database["restaurants"]  query_filter = {'borough' : 'Manhattan'} update_operation = { '$set' :      { 'borough' : 'Manhattan (north)' } }  result = restaurants.update_many(query_filter, update_operation, upsert = True) Return Value The update_one() and update_many() methods each return an UpdateResult
+object. The UpdateResult type contains the following properties: Additional Information To learn more about creating query filters, see the Specify a Query guide. API Documentation To learn more about any of the methods or types discussed in this
+guide, see the following API documentation: 

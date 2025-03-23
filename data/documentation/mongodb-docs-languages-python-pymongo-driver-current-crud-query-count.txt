@@ -1,0 +1,18 @@
+Count Documents Overview In this guide, you can learn how to retrieve an accurate and estimated count of the
+number of documents in a collection. Retrieve an Accurate Count Use the count_documents() method to count the number of documents that are in a
+collection. To count the number of documents that match a specific search
+critera, pass a dictionary that includes a query filter to the
+count_documents() method. To learn more about specifying a query, see Specify a Query. Count All Documents To return a count of all documents in the collection, pass an empty dictionary to
+the count_documents() method, as shown in the following example: collection.count_documents({}) Count Specific Documents To return a count of documents that match specific search criteria, specify your
+query in the count_documents() method, as shown in the following example: collection.count_documents({ "author": "Mike" }) Customize Count Behavior The count_documents() method accepts optional parameters, which represent
+options you can use to configure the count operation. If you don't specify any
+options, the driver does not customize the count operation. The following table describes the options you can set to customize count_documents(): Retrieve an Estimated Count You can get an estimate of the number of documents in a collection by calling
+the estimated_document_count() method. The method estimates the amount of
+documents based on collection metadata, which might be faster than performing an
+accurate count. The following example estimates the number of documents in a collection: collection.estimated_document_count() Customize Estimated Count Behavior The estimated_document_count() method accepts optional parameters, which
+represent options you can use to configure the count operation. If you don't
+specify any options, the driver does not customize the count operation. The following table describes the options you can set to customize estimated_document_count(): Troubleshooting DeprecationWarning: Count Is Deprecated PyMongo no longer supports the count() method.
+Instead, use the count_documents() method from the Collection class. Important The count_documents() method belongs to the Collection class.
+If you try to call Cursor.count_documents(),
+PyMongo raises the following error: Traceback (most recent call last):   File "<stdin>", line 1, in <module> AttributeError: 'Cursor' object has no attribute 'count' API Documentation To learn more about any of the methods or types discussed in this
+guide, see the following API documentation: 
