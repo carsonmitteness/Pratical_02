@@ -1,0 +1,23 @@
+BSON Overview In this guide, you can learn how to create BSON documents, read BSON from a file,
+and write BSON to a file by using PyMongo. BSON, or Binary JSON, is the data format that MongoDB uses to organize
+and store data. This data format includes all JSON data structure types and
+adds support for types including dates, different size integers, ObjectIds, and
+binary data. You can use BSON documents in your Python application by including the
+bson package. For a complete list of supported types, see the
+BSON Types server manual page. The code samples in this guide use the following BSON document as an example: {     "address" : {         "street" : "Pizza St",         "zipcode" : "10003"     },     "coord" : [-73.982419, 41.579505]     "cuisine" : "Pizza",     "name" : "Mongo's Pizza" } Create a BSON Document You can create a BSON document by using the same notation you use to create a
+dictionary in Python. PyMongo automatically converts Python dictionaries
+into BSON documents when inserting them into a collection. The following example creates a BSON document that
+represents the preceding sample BSON document: document = {     "address": {         "street": "Pizza St",         "zipcode": "10003"     },     "coord": [-73.982419, 41.579505],     "cuisine": "Pizza",     "name": "Mongo's Pizza" } Change a BSON Document You can modify the contents of a BSON document by using the same notation you use to modify
+a dictionary in Python. The following example makes three changes to the previous
+BSON document: document["restaurant_id"] = 12345 del document["cuisine"] document["name"] = "Mongo's Pizza Place" Write BSON to a File To write BSON data to a file, open a file stream in write-binary mode on the output file.
+Then, write each document to the output file. Ensure that documents are encoded in BSON
+format by using the bson.encode() method. The following example writes the sample BSON document to file.bson: with open("file.bson", "w") as file:     file.write(bson.encode(document)) Read BSON from a File To read BSON documents from a file, open a file stream in read-binary mode on the input
+file. Then, decode the documents from BSON format as you read them by using the bson.decode()
+method. The following example reads the sample BSON document from file.bson:    with open("file.bson", "rb") as file:        data = file.read()        document = bson.decode(data)        print(document) {"address": {"street": "Pizza St", "zipcode": "10003"}, "coord": [-73.982419, 41.579505], "cuisine": "Pizza", "name": "Mongo's Pizza"} Work with Raw BSON Data PyMongo supports the usage of raw BSON documents. The following list contains
+some situations that might require using raw BSON documents: The RawBSONDocument class is a representation of a BSON document that provides
+access to the underlying raw BSON bytes. To use RawBSONDocument objects to represent
+documents in your collection, set the document_class parameter of the MongoClient
+constructor to RawBSONDocument. Note RawBSONDocument objects are read-only. To modify a RawBSONDocument, you must
+first convert it to a Python dictionary. The following example configures a MongoClient object to use RawBSONDocument objects
+to model the collection, then retrieves the sample document from the preceding examples: from bson.raw_bson import RawBSONDocument  client = pymongo.MongoClient("<connection URI>", document_class=RawBSONDocument) collection = client.sample_restaurants.restaurants raw_doc = collection.find_one({"name": "Mongo's Pizza"}) print(type(raw_doc)) <class 'bson.raw_bson.RawBSONDocument'> API Documentation To learn more about any of the methods or types discussed in this
+guide, see the bson API documentation. 
