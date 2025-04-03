@@ -18,9 +18,9 @@ chroma_client = chromadb.HttpClient(host="localhost", port=8000)
 
 
 
-CHUNK_SIZE = 300
-OVERLAP = 50
-EMBEDDING_MODEL = "nomic-embed-text" # "nomic-embed-text", "mxbai-embed-large"
+CHUNK_SIZE = 500
+OVERLAP = 100
+EMBEDDING_MODEL = "all-minilm" # "nomic-embed-text", "mxbai-embed-large", "all-minilm"
 TEXT_PROCESS = True
 
 
@@ -70,9 +70,9 @@ def get_embedding(text: str, model: str = EMBEDDING_MODEL) -> list:
 def store_embedding(file: str, page: str, chunk: str, embedding: list):
    """Stores an embedding in ChromaDB with metadata."""
    collection.add(
-       embeddings=[embedding],  # Store the vector
-       metadatas=[{"file": file, "page": page, "chunk": chunk}],  # Metadata
-       ids=[f"{file}_page_{page}_chunk_{chunk}"],  # Unique ID
+       embeddings=[embedding],  
+       metadatas=[{"file": file, "page": page, "chunk": chunk}],  
+       ids=[f"{file}_page_{page}_chunk_{chunk}"], 
    )
    print(f"Stored embedding for: {chunk}")
 
@@ -133,7 +133,7 @@ def process_pdfs(data_dir, text_process=TEXT_PROCESS):
 
 
 
-# Process text documentation files
+# Process text documentation files  with the ability to process text (remove white space and punctuation)
 def process_documentation_folder(data_dir, text_process=TEXT_PROCESS):
    print(f"path = {data_dir}")
    doc_folder = f"{data_dir}/documentation"
@@ -162,10 +162,9 @@ def process_documentation_folder(data_dir, text_process=TEXT_PROCESS):
 
 # Query ChromaDB for similar embeddings
 def query_chroma(query_text: str, top_k=5):
-   """Queries ChromaDB for the most similar embeddings."""
-   embedding = get_embedding(query_text)  # Generate query embedding
+   embedding = get_embedding(query_text) 
    results = collection.query(
-       query_embeddings=[embedding],  # Search ChromaDB
+       query_embeddings=[embedding],  
        n_results=top_k
    )
 

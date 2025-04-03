@@ -6,8 +6,6 @@ from sentence_transformers import SentenceTransformer
 import ollama
 
 
-# all-MiniLM-L6-v2
-# embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 chroma_client = chromadb.HttpClient(host="localhost", port=8000)
 collection = chroma_client.get_or_create_collection(name="embedding_index")
@@ -18,16 +16,22 @@ INDEX_NAME = "embedding_index"
 DOC_PREFIX = "doc:"
 DISTANCE_METRIC = "COSINE"
 
-
-LLM = "deepseek-r1" # "mistral:latest", "deepseek-r1"
-EMBEDDING_MODEL = "nomic-embed-text" # "nomic-embed-text", "mxbai-embed-large"
-
-
-# def cosine_similarity(vec1, vec2):
-#     """Calculate cosine similarity between two vectors."""
-#     return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+### FEATURES
+LLM = "mistral:latest" # "mistral:latest", "qwen2.5"
+EMBEDDING_MODEL = "all-minilm" # "nomic-embed-text", "mxbai-embed-large", "all-minilm"
 
 
+### Different Prompts Used for the LLMS
+mistral = '''You are a helpful AI assistant.
+   Use the following context to answer the query as accurately as possible. If the context is
+   not relevant to the query, say 'I don't know'.'''
+
+qwen = '''
+You are a helpful AI assistant.
+ Use the following context to answer the query as accurately as possible. If the context 
+ doesn’t entirely match with the given query make an educated guess using the given 
+ information you have
+'''
 
 
 def get_embedding(text: str, model: str = EMBEDDING_MODEL) -> list:
@@ -87,9 +91,7 @@ def generate_rag_response(query, context_results):
 
 
    # Construct prompt with context
-   prompt = f"""You are a helpful AI assistant.
-   Use the following context to answer the query as accurately as possible. If the context is
-   not relevant to the query, say 'I don't know'.
+   prompt = f"""{mistral}
 
 
 Context:
@@ -137,31 +139,6 @@ def interactive_search():
 
        print("\n--- Response ---")
        print(response)
-
-
-
-
-# def store_embedding(file, page, chunk, embedding):
-#     """
-#     Store an embedding in Redis using a hash with vector field.
-
-
-#     Args:
-#         file (str): Source file name
-#         page (str): Page number
-#         chunk (str): Chunk index
-#         embedding (list): Embedding vector
-#     """
-#     key = f"{file}_page_{page}_chunk_{chunk}"
-#     redis_client.hset(
-#         key,
-#         mapping={
-#             "embedding": np.array(embedding, dtype=np.float32).tobytes(),
-#             "file": file,
-#             "page": page,
-#             "chunk": chunk,
-#         },
-#     )
 
 
 
