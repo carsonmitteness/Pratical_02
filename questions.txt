@@ -1,0 +1,6 @@
+I have a post document that I want to insert into a pymongo collection, how can I add that document into that table?
+What is the ACID Alternative for distributed systems, and what does each component mean?
+What 2 principles of the CAP Theorem does MySQL cover?
+What are the advantages of using a hash map over a B+ tree?
+What error can I expect if I try to add a document with the same id that exists in the collection given I have a collection?
+What type of imbalance case is caused by inserting 14 into an existing AVL tree with a root node containing the value 5, The root node already has a right child of 15 and has no left child?
