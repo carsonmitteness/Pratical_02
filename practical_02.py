@@ -20,7 +20,6 @@ if __name__ == "__main__":
     parser.add_argument('-test', action='store_true', help='Run through the test question or interactive search')
     parser.add_argument('-pre', action='store_true', help='Optional argument to Preprocess files')
     parser.add_argument('-debug', action='store_true', help='Optional argument to Preprocess files')
-    # TODO: readMe instructions on this b/c you need it just out there as a string which is weird... (defualts do not exist on these)
     parser.add_argument('database', type=str, help='Choose which RAG db you prefer', choices=['Redis', 'Chroma', 'Qdrant'])
     parser.add_argument('llm', type=str, help='Change the given LLM for the model', choices=['mistral:latest', 'qwen2.5:latest'])
     parser.add_argument('embed', type=str, help='Change the embedding model', choices=['mxbai-embed-large:latest', 'nomic-embed-text:latest', 'all-minilm:latest'])
