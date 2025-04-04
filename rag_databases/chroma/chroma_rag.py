@@ -1,12 +1,12 @@
 import numpy as np
 import chromadb
 import os
+import ollama
 from utils.timer import timer
 from memory_profiler import profile
 from utils.constants import INDEX_NAME, DOC_PREFIX, DISTANCE_METRIC, EMBEDDING_DICTIONARY
 from utils.text_processing import clean_text, extract_text_from_pdf, split_text_into_chunks, get_embedding
 from rag_databases.abstract_rag import AbstractRAG
-
 
 class ChromaRAG(AbstractRAG):
     def __init__(self, chunk_size, overlap, embedding, llm, preprocess, port, show_debug):
@@ -77,6 +77,30 @@ class ChromaRAG(AbstractRAG):
                     )
                 print(f" -----> Processed {file_name}")
 
+    def get_embedding(self, text: str) -> list:
+
+        response = ollama.embeddings(model=self.embedding, prompt=text)
+        return response["embedding"]
+
+    def search_embeddings(self, query, top_k=3):
+
+        query_embedding = self.get_embedding(query)
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],  
+            n_results=top_k
+            )
+
+        top_results = [
+            {
+           "file": meta["file"],
+           "page": meta["page"],
+           "chunk": meta["chunk"],
+           "similarity": distance
+            }
+        for meta, distance in zip(results["metadatas"][0], results["distances"][0])
+        ]
+        return top_results
 
     @timer
     @profile   
@@ -88,3 +112,4 @@ class ChromaRAG(AbstractRAG):
 
         self.process_pdfs(data_folder)
         self.process_documentation_folder(data_folder)
+
