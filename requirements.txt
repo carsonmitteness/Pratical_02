@@ -1,0 +1,6 @@
+chromadb
+qdrant-client
+redis
+ollama
+openpyxl
+numpy
